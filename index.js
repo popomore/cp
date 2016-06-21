@@ -11,15 +11,13 @@ module.exports = function() {
     cb = args.pop();
   }
 
-  const files = getFiles(args);
-  const done = pedding(files.size, function() {
-    console.log(21);
-    cb();
-  });
-
-  for (const file of files.values()) {
-    console.log(123, file);
-    copyFile(file, done);
+  if (!cb) {
+    return new Promise(function(resolve, reject) {
+      console.log(111);
+      copy(args, err => err ? reject(err) : resolve());
+    });
+  } else {
+    copy(args, cb);
   }
 
   //
@@ -45,3 +43,25 @@ module.exports = function() {
   //   }
   // }
 };
+
+function copy(args, cb) {
+  let files;
+  console.log(123);
+  try {
+    files = getFiles(args);
+  } catch (e) {
+    console.log(e);
+    return cb(e);
+  }
+  console.log(456);
+
+  const done = pedding(files.size, function() {
+    console.log(21);
+    cb();
+  });
+
+  for (const file of files.values()) {
+    console.log(123, file);
+    copyFile(file, done);
+  }
+}

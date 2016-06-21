@@ -16,72 +16,124 @@ describe('test/copy.test.js', function() {
   afterEach(mm.restore);
   afterEach(done => rimraf(tmp, done));
 
-  it('should copy file/dir(no-exist)', function() {
-    (function() {
-      copy('not-exists');
-    }).should.throw('aa');
-  });
-
-  it('should copy files/dirs(no-exist)', function() {
-    (function() {
-      copy('not-exists');
-    }).should.throw('aa');
-  });
-
-  // it('should throw when copy files to file', function*() {
-  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
-  // });
-  //
-  // it('should throw when copy files to dirsee', function*() {
-  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
-  // });
-  //
-  // it('should throw when copy files to file', function*() {
-  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
-  // });
-
-  it('should file(exists) => file(exists)', function(done) {
-    const destfile = path.join(fixtures, 'tmp/a.js');
-    createFile(destfile, 'aaa');
-    copy(path.join(fixtures, 'file/a.js'), destfile, function() {
-      fs.readFileSync(destfile, 'utf8').should.eql('console.log(\'a\');\n');
+  it('should throw when missing arguments', function(done) {
+    copy('not-exists').catch(err => {
+      err.message.should.eql('missing arguments');
       done();
     });
   });
 
-  it('should file(exists) => file(no-exists)', function*() {
-    const destfile = path.join(fixtures, 'tmp/a.js');
-    yield copy(path.join(fixtures, 'file/a.js'), destfile);
-    fs.readFileSync(destfile, 'console.log(\'a\');\n');
+  it('should throw when copy file/dir(no-exist)', function(done) {
+    const dest = path.join(fixtures, 'tmp/no-exist.js');
+    const src = path.join(fixtures, 'file/no-exist.js');
+    copy(src, dest).catch(err => {
+      err.message.should.eql('No such file or directory');
+      done();
+    });
   });
 
-  it('should file(exists) => dir(exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  it('should throw when copy files/dirs(no-exist)', function(done) {
+    const dest = path.join(fixtures, 'tmp/no-exist.js');
+    const src1 = path.join(fixtures, 'file/a.js');
+    const src2 = path.join(fixtures, 'file/no-exist.js');
+    copy(src1, src2, dest).catch(err => {
+      err.message.should.eql('No such file or directory');
+      done();
+    });
   });
 
-  it('should file(exists) => dir(no-exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  it.skip('should throw when copy files to file', function(done) {
+    const dest = path.join(fixtures, 'tmp/a.js');
+    const src1 = path.join(fixtures, 'files/a.js');
+    const src2 = path.join(fixtures, 'files/b.js');
+    createFile(dest, 'aaa');
+    copy(src1, src2, dest).catch(err => {
+      err.message.should.eql('Can\'t copy files to file');
+      done();
+    });
   });
 
-  it('should dir(exists) => dir(exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // it('should throw when copy files to dir', function*() {
+  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // });
+
+  it('should file(exists) => file(exists)', function(done) {
+    const dest = path.join(fixtures, 'tmp/a.js');
+    const src = path.join(fixtures, 'file/a.js');
+    createFile(dest, 'aaa');
+    copy(src, dest, function() {
+      fs.readFileSync(dest, 'utf8').should.eql('console.log(\'a\');\n');
+      done();
+    });
   });
 
-  it('should dir(exists) => dir(no-exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  it('should file(exists) => file(no-exists)', function(done) {
+    const dest = path.join(fixtures, 'tmp/a.js');
+    const src = path.join(fixtures, 'file/a.js');
+    copy(src, dest, function() {
+      fs.readFileSync(dest, 'utf8').should.eql('console.log(\'a\');\n');
+      done();
+    });
   });
 
-  it('should file(exists) => dir(exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  it('should file(exists) => dir(exists)', function(done) {
+    const dest = path.join(fixtures, 'tmp/a');
+    const src = path.join(fixtures, 'file/a.js');
+    mkdirp.sync(dest);
+    copy(src, dest, function() {
+      fs.readFileSync(path.join(dest, 'a.js'), 'utf8').should.eql('console.log(\'a\');\n');
+      done();
+    });
   });
 
-  it('should file(exists) => dir(no-exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  it('should file(exists) => dir(no-exists)', function(done) {
+    const dest = path.join(fixtures, 'tmp/a');
+    const src = path.join(fixtures, 'file/a.js');
+    copy(src, dest, function() {
+      fs.readFileSync(dest, 'utf8').should.eql('console.log(\'a\');\n');
+      done();
+    });
   });
 
-  it('should files(exists) => dir(exists)', function*() {
-    copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  it.only('should dir(exists) => dir(exists)', function(done) {
+    const dest = path.join(fixtures, 'tmp/a');
+    const src = path.join(fixtures, 'dir/a');
+    mkdirp.sync(dest);
+    copy(src, dest, function() {
+      fs.readFileSync(path.join(dest, 'a.js'), 'utf8').should.eql('console.log(\'a\');\n');
+      done();
+    });
   });
+
+  it('should dir(exists) => dir(no-exists)', function(done) {
+    const dest = path.join(fixtures, 'tmp/a');
+    const src = path.join(fixtures, 'dir/a');
+    copy(src, dest, function() {
+      fs.readFileSync(path.join(dest, 'a.js'), 'utf8').should.eql('console.log(\'a\');\n');
+      done();
+    });
+  });
+
+  //
+  // it('should dir(exists) => dir(exists)', function() {
+  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // });
+  //
+  // it('should dir(exists) => dir(no-exists)', function() {
+  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // });
+  //
+  // it('should file(exists) => dir(exists)', function() {
+  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // });
+  //
+  // it('should file(exists) => dir(no-exists)', function() {
+  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // });
+  //
+  // it('should files(exists) => dir(exists)', function() {
+  //   copy(path.join(fixtures, 'file/a.js'), path.join(fixtures, 'tmp/a.js'));
+  // });
 
 });
 
